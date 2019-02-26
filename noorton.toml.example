@@ -1,7 +1,7 @@
 expander_device = "/dev/spidev0.0"
 
 [client]
-endpoint = "http://localhost:8020/castle/lock-state?toggle"
+endpoint = "http://localhost:8020/castle/lock?toggle"
 
 [input_pins]
 switches = [ 1 ]
