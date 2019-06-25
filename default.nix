@@ -1,38 +1,25 @@
-{ pkgsPath ? <nixpkgs>, crossSystem ? null }:
-
 let
-    mozOverlay = import (
-        builtins.fetchTarball https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz
-    );
-    pkgs = import pkgsPath {
-        overlays = [ mozOverlay ];
-        inherit crossSystem;
-    };
-    targets = [ pkgs.stdenv.targetPlatform.config ];
+  defaultPkgs = import <nixpkgs> {};
 in
 
-with pkgs;
+{
+  openssl ? defaultPkgs.openssl,
+  pkg-config ? defaultPkgs.pkg-config,
+  rustPlatform ? defaultPkgs.rustPlatform
+}:
 
-stdenv.mkDerivation {
-    name = "noorton";
+rustPlatform.buildRustPackage rec {
+  name = "noorton-${version}";
+  version = "unstable";
 
-    # build time dependencies targeting the build platform
-    depsBuildBuild = [
-        buildPackages.stdenv.cc
-    ];
-    HOST_CC = "cc";
+  src = ./.;
 
-    # build time dependencies targeting the host platform
-    nativeBuildInputs = [
-        (buildPackages.buildPackages.latest.rustChannels.nightly.rust.override { inherit targets; })
-        buildPackages.buildPackages.rustfmt
-    ];
-    shellHook = ''
-        export RUSTFLAGS="-C linker=$CC"
-    '';
-    CARGO_BUILD_TARGET = targets;
+  cargoSha256 = "0n8cbf4ifsiv0dz0y9jkvd5ihinhlj6911nfjj7a6kd5c3phwi1b";
 
-    # run time dependencies
-    OPENSSL_DIR = openssl_1_1.dev;
-    OPENSSL_LIB_DIR = "${openssl_1_1.out}/lib";
+  nativeBuildInputs = [
+    pkg-config
+  ];
+  buildInputs = [
+    openssl
+  ];
 }
